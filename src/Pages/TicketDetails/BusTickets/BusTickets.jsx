@@ -21,6 +21,9 @@ const BusTickets = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false); 
   const [loading, setLoading] = useState(true);
+  
+  // 🎯 পেমেন্ট পপআপ ওপেন/ক্লোজ করার জন্য নতুন স্টেট
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const totalSeats = ["A1", "A2", "A3", "A4", "B1", "B2", "B3", "B4", "C1", "C2", "C3", "C4", "D1", "D2", "D3", "D4"];
   const bookedSeatsDemo = ["A2", "C3"]; 
@@ -32,7 +35,6 @@ const BusTickets = () => {
 
   const fetchBuses = (queryString) => {
     setLoading(true);
-    // 🎯 লোকালহোস্টের বদলে ডাইনামিক API_URL ব্যবহার করা হয়েছে
     fetch(`${API_URL}/transports?category=bus${queryString}`)
       .then((res) => res.json())
       .then((data) => {
@@ -59,8 +61,8 @@ const BusTickets = () => {
     setSelectedBus(null);
     setSelectedSeats([]);
     setBookingSuccess(false);
+    setIsPaymentModalOpen(false);
 
-    // সার্চ কুয়েরি তৈরি 
     let query = "";
     if (from !== "Select Location") query += `&from=${encodeURIComponent(from)}`;
     if (to !== "Select Location") query += `&to=${encodeURIComponent(to)}`;
@@ -70,6 +72,7 @@ const BusTickets = () => {
 
   const handleViewSeats = (bus) => {
     setSelectedBus(null);
+    setIsPaymentModalOpen(false);
     setTimeout(() => {
       setSelectedBus(bus);
       setSelectedSeats([]);
@@ -110,7 +113,6 @@ const BusTickets = () => {
       totalPassengers: passengers
     };
 
-    // 🎯 পোস্ট রিকোয়েস্টেও ডাইনামিক API_URL বসানো হয়েছে
     fetch(`${API_URL}/bookings`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -120,6 +122,7 @@ const BusTickets = () => {
       .then(data => {
         setIsProcessing(false);
         if (data.success || data.insertedId) {
+          setIsPaymentModalOpen(false); // পেমেন্ট সফল হলে পপআপ বন্ধ হবে
           setBookingSuccess(true); 
           setSelectedSeats([]);
           setPaymentMethod("");
@@ -158,6 +161,66 @@ const BusTickets = () => {
               className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-md transition text-sm"
             >
               Awesome, Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 🎯 নতুন পেমেন্ট গেটওয়ে পপআপ মোডাল (পেমেন্ট বাটনে ক্লিক বা সব সিট সিলেক্ট হলে আসবে) */}
+      {isPaymentModalOpen && selectedBus && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl relative border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
+            
+            {/* পপআপ বন্ধ করার বাটন */}
+            <button 
+              onClick={() => setIsPaymentModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition bg-gray-100 hover:bg-gray-200 p-1.5 rounded-full"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2 border-b pb-3">
+              <CreditCard className="w-5 h-5 text-red-500" />
+              <h3 className="text-base font-bold text-gray-800">Complete Your Payment</h3>
+            </div>
+
+            {/* চেকআউট ডিটেইলস সামারি */}
+            <div className="space-y-2 bg-gray-50 p-4 rounded-2xl border text-xs font-semibold text-gray-600">
+              <div className="flex justify-between"><span>Bus Name:</span> <span className="text-gray-900 font-bold">{selectedBus.name}</span></div>
+              <div className="flex justify-between"><span>Route:</span> <span className="text-gray-900">{selectedBus.from} → {selectedBus.to}</span></div>
+              <div className="flex justify-between"><span>Passengers:</span> <span className="text-gray-900 font-mono font-bold">{passengers} Person(s)</span></div>
+              <div className="flex justify-between"><span>Seats:</span> <span className="text-red-500 font-mono font-bold">{selectedSeats.join(", ")}</span></div>
+              <div className="flex justify-between border-t pt-2 font-bold text-sm text-gray-900">
+                <span>Total Cost:</span> <span>৳{selectedBus.price * selectedSeats.length}</span>
+              </div>
+            </div>
+
+            {/* গেটওয়ে সিলেকশন */}
+            <div className="space-y-2">
+              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Select Gateway</label>
+              <div className="grid grid-cols-3 gap-2">
+                {["bkash", "nagad", "rocket"].map((method) => (
+                  <button
+                    key={method}
+                    type="button"
+                    onClick={() => setPaymentMethod(method)}
+                    className={`p-2.5 border rounded-xl text-xs font-bold capitalize transition-all duration-200 active:scale-95
+                      ${paymentMethod === method ? "border-red-500 bg-red-50 text-red-600 shadow-sm ring-1 ring-red-500" : "border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100"}`}
+                  >
+                    {method}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* ফাইনাল পে বাটন */}
+            <button
+              onClick={handlePaymentSubmit}
+              disabled={isProcessing}
+              className="w-full mt-2 bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2 transition disabled:opacity-50 text-xs active:scale-[0.98]"
+            >
+              <CreditCard className="w-4 h-4" />
+              {isProcessing ? "Confirming Gateway Escrow..." : `Pay ৳${selectedBus.price * selectedSeats.length} & Confirm`}
             </button>
           </div>
         </div>
@@ -210,7 +273,7 @@ const BusTickets = () => {
               <label className="block text-[11px] font-bold text-gray-400 uppercase flex items-center gap-1"><Users className="w-4 h-4" /> Passengers</label>
               <select 
                 value={passengers} 
-                onChange={(e) => { setPassengers(Number(e.target.value)); setSelectedSeats([]); }} 
+                onChange={(e) => { setPassengers(Number(e.target.value)); setSelectedSeats([]); setIsPaymentModalOpen(false); }} 
                 className="w-full bg-transparent font-bold text-gray-700 outline-none mt-1 text-sm cursor-pointer"
               >
                 <option value={1}>1 Passenger</option>
@@ -223,7 +286,7 @@ const BusTickets = () => {
             <div className="md:col-span-1 flex justify-center">
               <button type="submit" className="w-16 h-16 bg-red-500 hover:bg-red-600 text-white rounded-3xl flex items-center justify-center shadow-lg transition-transform active:scale-90">
                 <Search className="w-6 h-6" />
-              </              button>
+              </button>
             </div>
           </form>
         </div>
@@ -269,6 +332,7 @@ const BusTickets = () => {
         {/* SEAT GRID SECTION */}
         {selectedBus && (
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mt-8 border-t pt-8 border-dashed border-gray-200">
+            {/* বাম পাশ: সিট গ্রিড */}
             <div className="md:col-span-5 bg-white p-6 rounded-3xl border border-gray-100 shadow-xl text-center">
               <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Select Seats ({selectedBus.name})</h4>
               <p className="text-[11px] text-gray-400 mb-6">Please select exactly <b>{passengers}</b> seat(s)</p>
@@ -295,6 +359,7 @@ const BusTickets = () => {
               </div>
             </div>
 
+            {/* ডান পাশ: রিয়েল-টাইম চেকআউট রিভিউ এবং পপআপ ট্রিগার বাটন */}
             <div className="md:col-span-7 bg-white p-6 rounded-3xl border border-gray-100 shadow-xl flex flex-col justify-between">
               <div>
                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Checkout Details</h4>
@@ -307,35 +372,16 @@ const BusTickets = () => {
                     <span>Total Cost:</span> <span>৳{selectedBus.price * selectedSeats.length}</span>
                   </div>
                 </div>
-
-                {selectedSeats.length === passengers && (
-                  <div className="mt-4 space-y-2">
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase">Select Gateway</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {["bkash", "nagad", "rocket"].map((method) => (
-                        <button
-                          key={method}
-                          type="button"
-                          onClick={() => setPaymentMethod(method)}
-                          className={`p-2 border rounded-xl text-xs font-bold capitalize transition
-                            ${paymentMethod === method ? "border-red-500 bg-red-50 text-red-600 shadow-sm" : "border-gray-100 bg-gray-50 text-gray-600"}`}
-                        >
-                          {method}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
 
+              {/* যখন রিকোয়ার্ড সিট সিলেক্ট হয়ে যাবে তখন পপআপ ওপেন করার বাটনটি দৃশ্যমান হবে */}
               {selectedSeats.length === passengers && (
                 <button
-                  onClick={handlePaymentSubmit}
-                  disabled={isProcessing}
-                  className="w-full mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2 transition disabled:opacity-50 text-xs"
+                  onClick={() => setIsPaymentModalOpen(true)}
+                  className="w-full mt-6 bg-gray-900 hover:bg-gray-800 text-white font-bold py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2 transition text-xs active:scale-95"
                 >
                   <CreditCard className="w-4 h-4" />
-                  {isProcessing ? "Confirming Gateway Escrow..." : `Pay ৳${selectedBus.price * selectedSeats.length} & Reserve Ticket`}
+                  Proceed to Payment Popup
                 </button>
               )}
             </div>
