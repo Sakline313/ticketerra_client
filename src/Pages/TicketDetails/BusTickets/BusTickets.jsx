@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Bus, Search, ArrowLeftRight, Calendar, Users, CreditCard, Armchair, CheckCircle2, X } from "lucide-react";
 import useAuth from "../../../hooks/useAuth"; 
 import Loader from "../../../Components/Loader/Loader.jsx";
@@ -22,7 +22,7 @@ const BusTickets = () => {
   const [bookingSuccess, setBookingSuccess] = useState(false); 
   const [loading, setLoading] = useState(true);
   
-  // 🎯 পেমেন্ট পপআপ ওপেন/ক্লোজ করার জন্য নতুন স্টেট
+  // 🎯 পেমেন্ট পপআপ ওপেন/ক্লোজ করার জন্য স্টেট
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const totalSeats = ["A1", "A2", "A3", "A4", "B1", "B2", "B3", "B4", "C1", "C2", "C3", "C4", "D1", "D2", "D3", "D4"];
@@ -166,7 +166,7 @@ const BusTickets = () => {
         </div>
       )}
 
-      {/* 🎯 নতুন পেমেন্ট গেটওয়ে পপআপ মোডাল (পেমেন্ট বাটনে ক্লিক বা সব সিট সিলেক্ট হলে আসবে) */}
+      {/* 🎯 নতুন পেমেন্ট গেটওয়ে পপআপ মোডাল */}
       {isPaymentModalOpen && selectedBus && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl relative border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
@@ -374,7 +374,7 @@ const BusTickets = () => {
                 </div>
               </div>
 
-              {/* যখন রিকোয়ার্ড সিট সিলেক্ট হয়ে যাবে তখন পপআপ ওপেন করার বাটনটি দৃশ্যমান হবে */}
+              {/* যখন রিকোয়ার্ড সিট সিলেক্ট হয়ে যাবে তখন পপআপ ওপেন করার বাটনটি দৃশ্যমান হবে */}
               {selectedSeats.length === passengers && (
                 <button
                   onClick={() => setIsPaymentModalOpen(true)}
