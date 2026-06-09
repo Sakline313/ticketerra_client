@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ShieldCheck, Phone, Lock, CreditCard } from "lucide-react";
-
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const Payment = () => {
   const { state: bookingData } = useLocation();
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ const Payment = () => {
     setIsProcessing(true);
 
     // ডাটাবেজে বুকিং সেভ এবং সিট কমানোর জন্য POST API কল
-    fetch("http://localhost:5000/bookings", {
+   fetch(`${API_URL}/bookings`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(bookingData),

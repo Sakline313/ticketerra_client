@@ -11,9 +11,12 @@ const Checkout = () => {
   const [transport, setTransport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [seatCount, setSeatCount] = useState(1);
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+
 
   useEffect(() => {
-    fetch(`http://localhost:5000/transports/${id}`)
+    fetch(`${API_URL}/transports/${id}`)
       .then((res) => res.json())
       .then((data) => {
         setTransport(data);

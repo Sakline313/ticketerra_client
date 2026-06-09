@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { CreditCard, Calendar, ShieldCheck, AlertCircle, Trash2 } from "lucide-react";
 import useAuth from "../../hooks/useAuth"; // লগইন ইউজারের ইমেইল ট্র্যাক করার জন্য
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const MyTickets = () => {
   const { user } = useAuth();
@@ -11,7 +12,7 @@ const MyTickets = () => {
   useEffect(() => {
     const userEmail = user?.email || "guest@gmail.com";
     
-    fetch(`http://localhost:5000/bookings?email=${userEmail}`)
+    fetch(`${API_URL}/bookings?email=${userEmail}`)
       .then((res) => res.json())
       .then((data) => {
         setMyTickets(data);
