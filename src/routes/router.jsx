@@ -6,6 +6,7 @@ import Register from "../Pages/Register/Register";
 
 // 📂 Components ফোল্ডার থেকে ইম্পোর্ট
 import About from "../Components/About/About";
+import MyTickets from "../Components/MyTickets/MyTickets";
 import Contuct from "../Components/Contact/Contact";
 
 // 📂 আপনার আসল ফোল্ডার স্ট্রাকচার (TicketDetails) অনুযায়ী সঠিক ইম্পোর্ট পাথ
@@ -14,6 +15,9 @@ import TrainTickets from "../Pages/TicketDetails/TrainTickets/TrainTickets";
 import LaunchTickets from "../Pages/TicketDetails/LaunchTickets/LaunchTickets";
 import PlaneTickets from "../Pages/TicketDetails/PlaneTickets/PlaneTickets";
 import Contact from "../Components/Contact/Contact";
+
+import  AdminDashboard from "../dashboard/Admin/AdminDashboard";
+import  Mytickets from"../Components/MyTickets/MyTickets";
 
 const router = createBrowserRouter([
   {
@@ -42,7 +46,7 @@ const router = createBrowserRouter([
       },
       {
         path: "my-tickets",
-        element: <div className="min-h-screen pt-28 text-center text-2xl font-bold">My Booked Tickets Coming Soon...</div>,
+        element: <MyTickets/>
       },
       
       {
@@ -68,6 +72,10 @@ const router = createBrowserRouter([
       {
         path: "contact",
         element: <Contact/>
+      },
+      {
+        path: "/admin-dashboard",
+        element: <AdminDashboard />
       }
     ],
   },
