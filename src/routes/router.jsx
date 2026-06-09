@@ -18,6 +18,9 @@ import Contact from "../Components/Contact/Contact";
 
 import  AdminDashboard from "../dashboard/Admin/AdminDashboard";
 import  Mytickets from"../Components/MyTickets/MyTickets";
+import Checkout from "../Pages/TicketDetails/Checkout/Checkout";
+import Payment from "../Pages/TicketDetails/Checkout/Payment";
+import PaymentSuccess from "../Pages/TicketDetails/Checkout/PaymentSuccess";
 
 const router = createBrowserRouter([
   {
@@ -76,6 +79,19 @@ const router = createBrowserRouter([
       {
         path: "/admin-dashboard",
         element: <AdminDashboard />
+      },
+
+      {
+        path:"checkout",
+        element:<Checkout/>
+      },
+      {
+        path : "payment",
+        element: <Payment/>
+      },
+      {
+        path: "paymentSuccsess",
+        element: <PaymentSuccess/>
       }
     ],
   },

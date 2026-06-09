@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Train, Search, ArrowLeftRight, Calendar } from "lucide-react";
-
+import Loader from "../../../Components/Loader/Loader.jsx";
 const TrainTickets = () => {
   const [trains, setTrains] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -155,15 +155,13 @@ const TrainTickets = () => {
 
         {/* Dynamic Train List Section */}
         <div className="mt-8 mb-12">
-          {loading ? (
-            <div className="p-8 bg-white rounded-2xl border border-gray-100 text-center text-gray-500 font-medium shadow-sm animate-pulse">
-              Loading train schedules...
-            </div>
-          ) : trains.length === 0 ? (
-            <div className="p-8 bg-white rounded-2xl border border-gray-100 text-center text-gray-400 font-medium shadow-sm">
-              No trains found for this route.
-            </div>
-          ) : (
+  {loading ? (
+    <Loader message="Sifting Train Schedules Across Database..." />
+  ) : trains.length === 0 ? (
+    <div className="p-8 bg-white rounded-2xl border border-gray-100 text-center text-gray-400 font-medium shadow-sm">
+      No trains found for this route.
+    </div>
+  ) : (
             <div className="grid grid-cols-1 gap-4">
               {trains.map((train) => (
                 <div key={train._id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

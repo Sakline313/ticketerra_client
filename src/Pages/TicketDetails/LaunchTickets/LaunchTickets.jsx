@@ -1,17 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { Ship, Search, ArrowLeftRight, Calendar, Anchor } from "lucide-react";
+import Loader from "../../../Components/Loader/Loader.jsx"; // লোডার কম্পোনেন্ট ইম্পোর্ট
+import { Link } from 'react-router-dom';
+
 
 const LaunchTickets = () => {
   const [launches, setLaunches] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // সার্চের জন্য স্টেট (State) ডিক্লেয়ারেশন
+  // সার্চের জন্য স্টেট (State) ডিক্লেয়ারেশন
   const [departFrom, setDepartFrom] = useState("Select Terminal");
   const [goingTo, setGoingTo] = useState("Select Terminal");
   const [journeyDate, setJourneyDate] = useState("2026-06-08");
   const [cabinType, setCabinType] = useState("Single Cabin");
 
-  // প্রথমবার পেজ লোড হলে সব লঞ্চ নিয়ে আসবে
+  // প্রথমবার পেজ লোড হলে সব লঞ্চ নিয়ে আসবে
   useEffect(() => {
     fetchLaunches("");
   }, []);
@@ -34,19 +37,26 @@ const LaunchTickets = () => {
   // সার্চ বাটনে ক্লিক করলে এই ফাংশনটি রান হবে
   const handleSearch = (e) => {
     e.preventDefault();
+    if (departFrom === "Select Terminal" || goingTo === "Select Terminal") {
+      alert("Please select a valid origin and destination terminal!");
+      return;
+    }
+    if (departFrom === goingTo) {
+      alert("Origin and Destination terminals cannot be the same!");
+      return;
+    }
     
-    // ডাইনামিক কুয়েরি স্ট্রিং তৈরি
+    // ডাইনামিক কুয়েরি স্ট্রিং তৈরি
     let query = "";
     if (departFrom !== "Select Terminal") query += `&from=${departFrom}`;
     if (goingTo !== "Select Terminal") query += `&to=${goingTo}`;
     if (journeyDate) query += `&date=${journeyDate}`;
-    // আপনার ডাটাবেজে যদি cabinType বা seatClass থাকে তবে সেটিও যোগ করতে পারেন
     
     fetchLaunches(query);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-10">
+    <div className="min-h-screen bg-gray-50 pt-10 pb-20">
       <div className="max-w-5xl mx-auto px-4">
         
         {/* Header */}
@@ -59,7 +69,6 @@ const LaunchTickets = () => {
 
         {/* Search Box */}
         <div className="w-full bg-white rounded-[40px] shadow-2xl border border-gray-100 p-2">
-          {/* এখানে onSubmit এ handleSearch ফাংশন যুক্ত করা হয়েছে */}
           <form className="grid grid-cols-1 md:grid-cols-12 gap-3 p-4 items-center" onSubmit={handleSearch}>
             
             {/* Depart From */}
@@ -119,10 +128,10 @@ const LaunchTickets = () => {
                 onChange={(e) => setCabinType(e.target.value)}
                 className="w-full bg-transparent font-bold text-gray-700 outline-none mt-1 text-sm cursor-pointer"
               >
-                <option>Single Cabin</option>
-                <option>Double Cabin</option>
-                <option>VIP Cabin</option>
-                <option>Deck</option>
+                <option value="Single Cabin">Single Cabin</option>
+                <option value="Double Cabin">Double Cabin</option>
+                <option value="VIP Cabin">VIP Cabin</option>
+                <option value="Deck">Deck</option>
               </select>
             </div>
 
@@ -134,6 +143,7 @@ const LaunchTickets = () => {
             </div>
           </form>
 
+          {/* Trending Route Setup */}
           <div className="px-6 py-4 bg-gray-50/30 rounded-b-[40px] text-[11px] flex flex-wrap items-center gap-3">
             <span className="font-bold text-gray-400 uppercase">Trending:</span>
             {["Dhaka → Barishal", "Barishal → Dhaka"].map((route, i) => (
@@ -141,9 +151,11 @@ const LaunchTickets = () => {
                 key={i} 
                 onClick={() => {
                   const [from, to] = route.split(" → ");
-                  setDepartFrom(from === "Dhaka" ? "Dhaka (Sadarghat)" : from);
-                  setGoingTo(to === "Dhaka" ? "Dhaka (Sadarghat)" : to);
-                  fetchLaunches(`&from=${from === "Dhaka" ? "Dhaka (Sadarghat)" : from}&to=${to === "Dhaka" ? "Dhaka (Sadarghat)" : to}`);
+                  const finalFrom = from === "Dhaka" ? "Dhaka (Sadarghat)" : from;
+                  const finalTo = to === "Dhaka" ? "Dhaka (Sadarghat)" : to;
+                  setDepartFrom(finalFrom);
+                  setGoingTo(finalTo);
+                  fetchLaunches(`&from=${finalFrom}&to=${finalTo}`);
                 }}
                 className="bg-white border border-gray-100 px-3 py-1.5 rounded-full text-gray-600 font-semibold cursor-pointer hover:text-blue-500 transition shadow-sm"
               >
@@ -153,20 +165,18 @@ const LaunchTickets = () => {
           </div>
         </div>
 
-        {/* Dynamic Launch List Section */}
+        {/* Dynamic Launch List Section With Global Assignment Loader */}
         <div className="mt-8 mb-12">
           {loading ? (
-            <div className="p-8 bg-white rounded-2xl border border-gray-100 text-center text-gray-500 font-medium shadow-sm animate-pulse">
-              Loading available launches...
-            </div>
+            <Loader message="Scanning waterways and secure cabin configurations..." />
           ) : launches.length === 0 ? (
             <div className="p-8 bg-white rounded-2xl border border-gray-100 text-center text-gray-400 font-medium shadow-sm">
-              No launches found for this route.
+              No luxury launches or cabins found for this route.
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {launches.map((launch) => (
-                <div key={launch._id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div key={launch._id || launch.id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div className="flex items-center gap-4">
                     <div className="p-4 bg-blue-50 text-blue-500 rounded-2xl">
                       <Anchor className="w-6 h-6" />
@@ -189,9 +199,12 @@ const LaunchTickets = () => {
                       <span className="text-2xl font-black text-gray-800">৳{launch.price}</span>
                       <span className="text-xs text-gray-400 block">per cabin</span>
                     </div>
-                    <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-2xl transition shadow-md active:scale-95 text-sm">
-                      Book Cabin
-                    </button>
+                  <Link 
+  to={`/checkout/${launch._id || launch.id}`} 
+  className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-2xl transition shadow-md active:scale-95 text-sm block text-center"
+>
+  Book Cabin
+</Link>
                   </div>
                 </div>
               ))}

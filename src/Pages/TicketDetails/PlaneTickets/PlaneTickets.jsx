@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Plane, Search, ArrowLeftRight, Calendar } from "lucide-react";
+import Loader from "../../../Components/Loader/Loader.jsx";
+
 
 const PlaneTickets = () => {
   const [flights, setFlights] = useState([]);
   const [loading, setLoading] = useState(true);
+  
 
   // সার্চের জন্য স্টেট (State)
   const [flyFrom, setFlyFrom] = useState("Select Airport");
@@ -155,15 +158,13 @@ const PlaneTickets = () => {
 
         {/* Dynamic Flight List Section */}
         <div className="mt-8 mb-12">
-          {loading ? (
-            <div className="p-8 bg-white rounded-2xl border border-gray-100 text-center text-gray-500 font-medium shadow-sm animate-pulse">
-              Searching flights...
-            </div>
-          ) : flights.length === 0 ? (
-            <div className="p-8 bg-white rounded-2xl border border-gray-100 text-center text-gray-400 font-medium shadow-sm">
-              No available flights found for this route.
-            </div>
-          ) : (
+  {loading ? (
+    <Loader message="Scanning Skyways and Fleet Availability..." />
+  ) : flights.length === 0 ? (
+    <div className="p-8 bg-white rounded-2xl border border-gray-100 text-center text-gray-400 font-medium shadow-sm">
+      No available flights found for this route.
+    </div>
+  ) : (
             <div className="grid grid-cols-1 gap-4">
               {flights.map((flight) => (
                 <div key={flight._id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
