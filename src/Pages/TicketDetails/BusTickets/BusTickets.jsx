@@ -3,7 +3,6 @@ import { Bus, Search, ArrowLeftRight, Calendar, Users, CreditCard, Armchair, Che
 import useAuth from "../../../hooks/useAuth"; 
 import Loader from "../../../Components/Loader/Loader.jsx";
 
-// 🎯 ডাইনামিক এপিআই রুট ইউআরএল সেটআপ
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const BusTickets = () => {
@@ -16,19 +15,17 @@ const BusTickets = () => {
   
   const [searchedBuses, setSearchedBuses] = useState([]);
   const [selectedBus, setSelectedBus] = useState(null);
+  const [paymentBus, setPaymentBus] = useState(null); // ✅ নতুন state
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false); 
   const [loading, setLoading] = useState(true);
-  
-  // 🎯 পেমেন্ট পপআপ ওপেন/ক্লোজ করার জন্য স্টেট
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const totalSeats = ["A1", "A2", "A3", "A4", "B1", "B2", "B3", "B4", "C1", "C2", "C3", "C4", "D1", "D2", "D3", "D4"];
   const bookedSeatsDemo = ["A2", "C3"]; 
 
-  // প্রথমবার পেজ লোড হলে ডিফল্ট ৫টি বাস আসবে
   useEffect(() => {
     fetchBuses("&limit=5");
   }, []);
@@ -59,24 +56,23 @@ const BusTickets = () => {
     }
     
     setSelectedBus(null);
+    setPaymentBus(null);
     setSelectedSeats([]);
     setBookingSuccess(false);
     setIsPaymentModalOpen(false);
 
     let query = "";
-    if (from !== "Select Location") query += `&from=${encodeURIComponent(from)}`;
-    if (to !== "Select Location") query += `&to=${encodeURIComponent(to)}`;
+    if (from !== "Select Location") query += `&from=${from}`;
+    if (to !== "Select Location") query += `&to=${to}`;
 
     fetchBuses(query); 
   };
 
   const handleViewSeats = (bus) => {
-    setSelectedBus(null);
+    setSelectedBus(bus);
+    setSelectedSeats([]);
     setIsPaymentModalOpen(false);
-    setTimeout(() => {
-      setSelectedBus(bus);
-      setSelectedSeats([]);
-    }, 5);
+    setPaymentBus(null);
   };
 
   const handleSeatClick = (seat) => {
@@ -92,8 +88,7 @@ const BusTickets = () => {
     }
   };
 
-  const handlePaymentSubmit = (e) => {
-    e.preventDefault();
+  const handlePaymentSubmit = () => {
     if (!paymentMethod) return alert("Please select a payment method!");
     if (selectedSeats.length !== passengers) {
       return alert(`Please select exactly ${passengers} seat(s) before proceeding!`);
@@ -102,13 +97,13 @@ const BusTickets = () => {
     setIsProcessing(true);
 
     const bookingInfo = {
-      transportId: selectedBus._id || selectedBus.id, 
+      transportId: paymentBus._id || paymentBus.id, // ✅ paymentBus
       email: user?.email || "guest@gmail.com",
       transportType: "bus",
-      route: `${selectedBus.from} → ${selectedBus.to}`,
-      price: Number(selectedBus.price) * selectedSeats.length,
+      route: `${paymentBus.from} → ${paymentBus.to}`, // ✅ paymentBus
+      price: Number(paymentBus.price) * selectedSeats.length, // ✅ paymentBus
       date: date,
-      vehicleName: selectedBus.name,
+      vehicleName: paymentBus.name, // ✅ paymentBus
       seats: selectedSeats.join(", "),
       totalPassengers: passengers
     };
@@ -122,11 +117,12 @@ const BusTickets = () => {
       .then(data => {
         setIsProcessing(false);
         if (data.success || data.insertedId) {
-          setIsPaymentModalOpen(false); // পেমেন্ট সফল হলে পপআপ বন্ধ হবে
+          setIsPaymentModalOpen(false);
           setBookingSuccess(true); 
           setSelectedSeats([]);
           setPaymentMethod("");
           setSelectedBus(null);
+          setPaymentBus(null); // ✅ reset
           fetchBuses("&limit=5"); 
         } else {
           alert(data.message || "Booking rejected by server engine.");
@@ -141,7 +137,7 @@ const BusTickets = () => {
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-20 relative">
       
-      {/* 🎯 পেমেন্ট সাকসেস পপআপ মোডাল */}
+      {/* Booking Success Modal */}
       {bookingSuccess && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center space-y-4 shadow-2xl relative">
@@ -166,12 +162,11 @@ const BusTickets = () => {
         </div>
       )}
 
-      {/* 🎯 নতুন পেমেন্ট গেটওয়ে পপআপ মোডাল */}
-      {isPaymentModalOpen && selectedBus && (
+      {/* ✅ Payment Gateway Modal — paymentBus ব্যবহার করছে */}
+      {isPaymentModalOpen && paymentBus && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl relative border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl relative border border-gray-100">
             
-            {/* পপআপ বন্ধ করার বাটন */}
             <button 
               onClick={() => setIsPaymentModalOpen(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition bg-gray-100 hover:bg-gray-200 p-1.5 rounded-full"
@@ -184,18 +179,16 @@ const BusTickets = () => {
               <h3 className="text-base font-bold text-gray-800">Complete Your Payment</h3>
             </div>
 
-            {/* চেকআউট ডিটেইলস সামারি */}
             <div className="space-y-2 bg-gray-50 p-4 rounded-2xl border text-xs font-semibold text-gray-600">
-              <div className="flex justify-between"><span>Bus Name:</span> <span className="text-gray-900 font-bold">{selectedBus.name}</span></div>
-              <div className="flex justify-between"><span>Route:</span> <span className="text-gray-900">{selectedBus.from} → {selectedBus.to}</span></div>
-              <div className="flex justify-between"><span>Passengers:</span> <span className="text-gray-900 font-mono font-bold">{passengers} Person(s)</span></div>
+              <div className="flex justify-between"><span>Bus Name:</span> <span className="text-gray-900 font-bold">{paymentBus.name}</span></div>
+              <div className="flex justify-between"><span>Route:</span> <span className="text-gray-900">{paymentBus.from} → {paymentBus.to}</span></div>
+              <div className="flex justify-between"><span>Passengers:</span> <span className="font-mono font-bold">{passengers} Person(s)</span></div>
               <div className="flex justify-between"><span>Seats:</span> <span className="text-red-500 font-mono font-bold">{selectedSeats.join(", ")}</span></div>
               <div className="flex justify-between border-t pt-2 font-bold text-sm text-gray-900">
-                <span>Total Cost:</span> <span>৳{selectedBus.price * selectedSeats.length}</span>
+                <span>Total Cost:</span> <span>৳{paymentBus.price * selectedSeats.length}</span>
               </div>
             </div>
 
-            {/* গেটওয়ে সিলেকশন */}
             <div className="space-y-2">
               <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Select Gateway</label>
               <div className="grid grid-cols-3 gap-2">
@@ -213,21 +206,20 @@ const BusTickets = () => {
               </div>
             </div>
 
-            {/* ফাইনাল পে বাটন */}
             <button
-              onClick={handlePaymentSubmit}
+              onClick={() => handlePaymentSubmit()}
               disabled={isProcessing}
               className="w-full mt-2 bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2 transition disabled:opacity-50 text-xs active:scale-[0.98]"
             >
               <CreditCard className="w-4 h-4" />
-              {isProcessing ? "Confirming Gateway Escrow..." : `Pay ৳${selectedBus.price * selectedSeats.length} & Confirm`}
+              {isProcessing ? "Confirming Gateway Escrow..." : `Pay ৳${paymentBus.price * selectedSeats.length} & Confirm`}
             </button>
           </div>
         </div>
       )}
 
+      {/* Main Container */}
       <div className="max-w-5xl mx-auto px-4">
-        {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-extrabold text-gray-800 flex items-center justify-center gap-2">
             <Bus className="w-8 h-8 text-red-500" /> Bus Ticket Booking
@@ -291,99 +283,116 @@ const BusTickets = () => {
           </form>
         </div>
 
-        {/* Loader & List area */}
+        {/* Bus List */}
         {loading ? (
           <Loader message="Fetching Live Buses From Database..." />
-        ) : searchedBuses.length === 0 ? (
+        ) : !Array.isArray(searchedBuses) || searchedBuses.length === 0 ? (
           <div className="mt-12 p-8 bg-white rounded-2xl border border-gray-100 text-center text-gray-400 font-medium shadow-sm">
             No Buses available for this specific route setup.
           </div>
         ) : (
           <div className="mt-10 space-y-4">
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">Available Buses found in DB</h3>
-            {searchedBuses.map((bus) => (
-              <div key={bus._id || bus.id} className="bg-white border border-gray-100 p-6 rounded-3xl shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:shadow-lg transition">
-                <div>
-                  <h4 className="text-lg font-bold text-gray-800">{bus.name}</h4>
-                  <p className="text-xs font-semibold text-gray-400 uppercase mt-0.5">{bus.type}</p>
-                  <div className="mt-3 flex gap-4 text-xs text-gray-500">
-                    <span>Route: <b className="text-gray-700">{bus.from} → {bus.to}</b></span>
-                    <span>Departure: <b className="text-gray-700">{bus.time}</b></span>
-                    <span>Available Seats: <b className="text-red-500">{bus.availableSeats}</b></span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between w-full md:w-auto gap-6 border-t md:border-t-0 pt-3 md:pt-0">
+            {searchedBuses.map((bus, index) => {
+              const busKey = bus._id || bus.id || `bus-${index}`;
+              return (
+                <div key={busKey} className="bg-white border border-gray-100 p-6 rounded-3xl shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:shadow-lg transition">
                   <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase">Fare</p>
-                    <h5 className="text-xl font-black text-gray-800">৳{bus.price}</h5>
+                    <h4 className="text-lg font-bold text-gray-800">{bus.name}</h4>
+                    <p className="text-xs font-semibold text-gray-400 uppercase mt-0.5">{bus.type}</p>
+                    <div className="mt-3 flex gap-4 text-xs text-gray-500">
+                      <span>Route: <b className="text-gray-700">{bus.from} → {bus.to}</b></span>
+                      <span>Departure: <b className="text-gray-700">{bus.time}</b></span>
+                      <span>Available Seats: <b className="text-red-500">{bus.availableSeats}</b></span>
+                    </div>
                   </div>
-                  <button 
-                    onClick={() => handleViewSeats(bus)} 
-                    className="bg-gray-900 hover:bg-gray-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-sm active:scale-95"
-                  >
-                    View Seats
-                  </button>
+                  <div className="flex items-center justify-between w-full md:w-auto gap-6 border-t md:border-t-0 pt-3 md:pt-0">
+                    <div>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase">Fare</p>
+                      <h5 className="text-xl font-black text-gray-800">৳{bus.price}</h5>
+                    </div>
+                    <button 
+                      onClick={() => handleViewSeats(bus)} 
+                      className="bg-gray-900 hover:bg-gray-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-sm active:scale-95"
+                    >
+                      View Seats
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
-        {/* SEAT GRID SECTION */}
+        {/* Seat Selection Modal */}
         {selectedBus && (
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mt-8 border-t pt-8 border-dashed border-gray-200">
-            {/* বাম পাশ: সিট গ্রিড */}
-            <div className="md:col-span-5 bg-white p-6 rounded-3xl border border-gray-100 shadow-xl text-center">
-              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Select Seats ({selectedBus.name})</h4>
-              <p className="text-[11px] text-gray-400 mb-6">Please select exactly <b>{passengers}</b> seat(s)</p>
-              <div className="grid grid-cols-4 gap-3 max-w-[200px] mx-auto">
-                {totalSeats.map((seat) => {
-                  const isBooked = bookedSeatsDemo.includes(seat);
-                  const isSelected = selectedSeats.includes(seat);
-                  return (
-                    <button
-                      key={seat}
-                      disabled={isBooked}
-                      type="button"
-                      onClick={() => handleSeatClick(seat)}
-                      className={`p-2.5 rounded-xl text-xs font-bold flex flex-col items-center justify-center border transition
-                        ${isBooked ? "bg-gray-100 text-gray-300 cursor-not-allowed" : 
-                          isSelected ? "bg-red-500 border-red-600 text-white shadow-md" : 
-                          "bg-gray-50 border-gray-100 text-gray-700 hover:bg-gray-100"}`}
-                    >
-                      <Armchair className="w-3.5 h-3.5 mb-0.5" />
-                      {seat}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-5xl w-full p-6 relative shadow-2xl border border-gray-100">
+              
+              <button 
+                onClick={() => { setSelectedBus(null); setSelectedSeats([]); }}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition bg-gray-100 hover:bg-gray-200 p-1.5 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
 
-            {/* ডান পাশ: রিয়েল-টাইম চেকআউট রিভিউ এবং পপআপ ট্রিগার বাটন */}
-            <div className="md:col-span-7 bg-white p-6 rounded-3xl border border-gray-100 shadow-xl flex flex-col justify-between">
-              <div>
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Checkout Details</h4>
-                <div className="space-y-2 bg-gray-50 p-4 rounded-2xl border text-xs font-semibold text-gray-600">
-                  <div className="flex justify-between"><span>Bus Name:</span> <span className="text-gray-900 font-bold">{selectedBus.name}</span></div>
-                  <div className="flex justify-between"><span>Route:</span> <span className="text-gray-900">{selectedBus.from} → {selectedBus.to}</span></div>
-                  <div className="flex justify-between"><span>Passengers Count:</span> <span className="text-gray-900 font-mono font-bold">{passengers} Person(s)</span></div>
-                  <div className="flex justify-between"><span>Seats Chosen:</span> <span className="text-red-500 font-mono font-bold">{selectedSeats.length > 0 ? selectedSeats.join(", ") : "None"}</span></div>
-                  <div className="flex justify-between border-t pt-2 font-bold text-sm text-gray-900">
-                    <span>Total Cost:</span> <span>৳{selectedBus.price * selectedSeats.length}</span>
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mt-4">
+                <div className="md:col-span-5 bg-gray-50 p-6 rounded-3xl border border-gray-100 text-center">
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Select Seats ({selectedBus.name})</h4>
+                  <p className="text-[11px] text-gray-400 mb-6">Please select exactly <b>{passengers}</b> seat(s)</p>
+                  <div className="grid grid-cols-4 gap-3 max-w-[200px] mx-auto">
+                    {totalSeats.map((seat) => {
+                      const isBooked = bookedSeatsDemo.includes(seat);
+                      const isSelected = selectedSeats.includes(seat);
+                      return (
+                        <button
+                          key={seat}
+                          disabled={isBooked}
+                          type="button"
+                          onClick={() => handleSeatClick(seat)}
+                          className={`p-2.5 rounded-xl text-xs font-bold flex flex-col items-center justify-center border transition
+                            ${isBooked ? "bg-gray-100 text-gray-300 cursor-not-allowed" : 
+                              isSelected ? "bg-red-500 border-red-600 text-white shadow-md" : 
+                              "bg-white border-gray-200 text-gray-700 hover:bg-gray-100"}`}
+                        >
+                          <Armchair className="w-3.5 h-3.5 mb-0.5" />
+                          {seat}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
-              </div>
 
-              {/* যখন রিকোয়ার্ড সিট সিলেক্ট হয়ে যাবে তখন পপআপ ওপেন করার বাটনটি দৃশ্যমান হবে */}
-              {selectedSeats.length === passengers && (
-                <button
-                  onClick={() => setIsPaymentModalOpen(true)}
-                  className="w-full mt-6 bg-gray-900 hover:bg-gray-800 text-white font-bold py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2 transition text-xs active:scale-95"
-                >
-                  <CreditCard className="w-4 h-4" />
-                  Proceed to Payment Popup
-                </button>
-              )}
+                <div className="md:col-span-7 bg-gray-50 p-6 rounded-3xl border border-gray-100 flex flex-col justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Checkout Details</h4>
+                    <div className="space-y-2 bg-white p-4 rounded-2xl border text-xs font-semibold text-gray-600">
+                      <div className="flex justify-between"><span>Bus Name:</span> <span className="text-gray-900 font-bold">{selectedBus.name}</span></div>
+                      <div className="flex justify-between"><span>Route:</span> <span className="text-gray-900">{selectedBus.from} → {selectedBus.to}</span></div>
+                      <div className="flex justify-between"><span>Passengers Count:</span> <span className="text-gray-900 font-mono font-bold">{passengers} Person(s)</span></div>
+                      <div className="flex justify-between"><span>Seats Chosen:</span> <span className="text-red-500 font-mono font-bold">{selectedSeats.length > 0 ? selectedSeats.join(", ") : "None"}</span></div>
+                      <div className="flex justify-between border-t pt-2 font-bold text-sm text-gray-900">
+                        <span>Total Cost:</span> <span>৳{selectedBus.price * selectedSeats.length}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ✅ এখানে selectedBus কে paymentBus এ save করে seat modal বন্ধ করছি */}
+                  {selectedSeats.length === passengers && (
+                    <button
+                      onClick={() => {
+                        setPaymentBus(selectedBus);
+                        setSelectedBus(null);
+                        setIsPaymentModalOpen(true);
+                      }}
+                      className="w-full mt-6 bg-gray-900 hover:bg-gray-800 text-white font-bold py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2 transition text-xs active:scale-95"
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      Proceed to Payment Popup
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}

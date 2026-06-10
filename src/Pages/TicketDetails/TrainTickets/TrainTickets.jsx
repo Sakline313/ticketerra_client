@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Train, Search, ArrowLeftRight, Calendar } from "lucide-react";
 import Loader from "../../../Components/Loader/Loader.jsx";
+
 const TrainTickets = () => {
   const [trains, setTrains] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,7 +12,7 @@ const TrainTickets = () => {
   const [journeyDate, setJourneyDate] = useState("2026-06-08");
   const [seatClass, setSeatClass] = useState("Snigdha (AC)");
 
-  // প্রথমবার পেজ লোড হলে সব ট্রেন নিয়ে আসবে
+  // প্রথমবার পেজ লোড হলে সব ট্রেন নিয়ে আসবে
   useEffect(() => {
     fetchTrains("");
   }, []);
@@ -36,9 +37,17 @@ const TrainTickets = () => {
     e.preventDefault();
     
     let query = "";
-    if (fromStation !== "Select Station") query += `&from=${fromStation}`;
-    if (toStation !== "Select Station") query += `&to=${toStation}`;
-    if (journeyDate) query += `&date=${journeyDate}`;
+    // "Select Station" বা ফাঁকা না থাকলে কুয়েরিতে যোগ হবে
+    if (fromStation && fromStation !== "Select Station" && fromStation.trim() !== "") {
+      query += `&from=${encodeURIComponent(fromStation.trim())}`;
+    }
+    if (toStation && toStation !== "Select Station" && toStation.trim() !== "") {
+      query += `&to=${encodeURIComponent(toStation.trim())}`;
+    }
+    // নোট: ব্যাকএন্ডে ডেট ফিল্টার যুক্ত না থাকলে এটি ক্যাটাগরি অনুসারে ডাটা আনবে
+    if (journeyDate && journeyDate.trim() !== "") {
+      query += `&date=${encodeURIComponent(journeyDate.trim())}`;
+    }
     
     fetchTrains(query);
   };
@@ -67,7 +76,7 @@ const TrainTickets = () => {
                 onChange={(e) => setFromStation(e.target.value)}
                 className="w-full bg-transparent font-bold text-gray-700 outline-none mt-1 text-sm cursor-pointer"
               >
-                <option>Select Station</option>
+                <option value="Select Station">Select Station</option>
                 <option value="Dhaka">Dhaka</option>
                 <option value="Chattogram">Chattogram</option>
                 <option value="Rajshahi">Rajshahi</option>
@@ -89,7 +98,7 @@ const TrainTickets = () => {
                 onChange={(e) => setToStation(e.target.value)}
                 className="w-full bg-transparent font-bold text-gray-700 outline-none mt-1 text-sm cursor-pointer"
               >
-                <option>Select Station</option>
+                <option value="Select Station">Select Station</option>
                 <option value="Rajshahi">Rajshahi</option>
                 <option value="Dhaka">Dhaka</option>
                 <option value="Khulna">Khulna</option>
@@ -133,7 +142,7 @@ const TrainTickets = () => {
             </div>
           </form>
 
-          {/* Trending Section Click Logic */}
+          {/* Trending Section */}
           <div className="px-6 py-4 bg-gray-50/30 rounded-b-[40px] text-[11px] flex flex-wrap items-center gap-3">
             <span className="font-bold text-gray-400 uppercase">Trending:</span>
             {["Dhaka → Rajshahi", "Dhaka → Chattogram"].map((route, i) => (
@@ -143,7 +152,7 @@ const TrainTickets = () => {
                   const [from, to] = route.split(" → ");
                   setFromStation(from);
                   setToStation(to);
-                  fetchTrains(`&from=${from}&to=${to}`);
+                  fetchTrains(`&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
                 }}
                 className="bg-white border border-gray-100 px-3 py-1.5 rounded-full text-gray-600 font-semibold cursor-pointer hover:text-green-500 transition shadow-sm"
               >
@@ -155,13 +164,13 @@ const TrainTickets = () => {
 
         {/* Dynamic Train List Section */}
         <div className="mt-8 mb-12">
-  {loading ? (
-    <Loader message="Sifting Train Schedules Across Database..." />
-  ) : trains.length === 0 ? (
-    <div className="p-8 bg-white rounded-2xl border border-gray-100 text-center text-gray-400 font-medium shadow-sm">
-      No trains found for this route.
-    </div>
-  ) : (
+          {loading ? (
+            <Loader message="Sifting Train Schedules Across Database..." />
+          ) : trains.length === 0 ? (
+            <div className="p-8 bg-white rounded-2xl border border-gray-100 text-center text-gray-400 font-medium shadow-sm">
+              No trains found for this route.
+            </div>
+          ) : (
             <div className="grid grid-cols-1 gap-4">
               {trains.map((train) => (
                 <div key={train._id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

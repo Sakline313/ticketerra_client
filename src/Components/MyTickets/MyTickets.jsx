@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
-import { CreditCard, Calendar, ShieldCheck, AlertCircle, Trash2 } from "lucide-react";
-import useAuth from "../../hooks/useAuth"; // লগইন ইউজারের ইমেইল ট্র্যাক করার জন্য
+import React, { useEffect, useState } from "react";
+import { CreditCard, Calendar, ShieldCheck, AlertCircle, Trash2, Download } from "lucide-react";
+import useAuth from "../../hooks/useAuth"; 
+
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const MyTickets = () => {
@@ -24,10 +25,10 @@ const MyTickets = () => {
       });
   }, [user]);
 
-  // 🗑️ টিকিট ক্যানসেল বা ডিলিট করার হ্যান্ডলার (অপশনাল)
+  // 🗑️ টিকিট ক্যানসেল বা ডিলিট করার হ্যান্ডলার
   const handleCancelTicket = (id) => {
     if (window.confirm("Are you sure you want to cancel this ticket booking?")) {
-      fetch(`http://localhost:5000/bookings/${id}`, {
+      fetch(`${API_URL}/bookings/${id}`, {
         method: "DELETE",
       })
         .then((res) => res.json())
@@ -38,6 +39,76 @@ const MyTickets = () => {
           }
         });
     }
+  };
+
+  // 📥 ডাইনামিক PDF ডাউনলোড হ্যান্ডলার (প্রিন্ট লেআউট দিয়ে তৈরি)
+  const handleDownloadPDF = (ticket) => {
+    // একটি নতুন প্রিন্ট উইন্ডো তৈরি করা হচ্ছে
+    const printWindow = window.open("", "_blank");
+    
+    const htmlContent = `
+      <html>
+        <head>
+          <title>Ticket-${ticket._id || 'Receipt'}</title>
+          <style>
+            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; padding: 40px; background-color: #fff; }
+            .ticket-box { max-w: 600px; margin: 0 auto; border: 2px dashed #e2e8f0; padding: 30px; rounded: 16px; background: #fff; position: relative; }
+            .header { text-align: center; border-bottom: 2px solid #ef4444; padding-bottom: 15px; margin-bottom: 25px; }
+            .header h1 { margin: 0; color: #ef4444; font-size: 28px; text-transform: uppercase; letter-spacing: 1px; }
+            .header p { margin: 5px 0 0 0; color: #64748b; font-size: 12px; font-weight: bold; }
+            .badge { display: inline-block; background: #fef2f2; color: #ef4444; padding: 4px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; text-transform: uppercase; margin-bottom: 15px; }
+            .title { font-size: 20px; font-weight: bold; margin: 0; color: #1e293b; }
+            .route { font-size: 14px; color: #475569; margin: 5px 0 20px 0; font-weight: 600; }
+            .info-grid { display: grid; grid-cols: 2; display: flex; justify-content: space-between; border-top: 1px solid #f1f5f9; border-b: 1px solid #f1f5f9; py: 15px; padding: 15px 0; margin-bottom: 20px; }
+            .info-item { font-size: 13px; color: #64748b; }
+            .info-item b { color: #0f172a; display: block; margin-top: 4px; font-size: 14px; }
+            .footer { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 12px 20px; margin-top: 20px; border-radius: 8px; }
+            .status { color: #10b981; font-weight: bold; font-size: 12px; text-transform: uppercase; display: flex; align-items: center; }
+            .price { font-size: 18px; font-weight: 900; color: #1e293b; margin: 0; }
+            .verification { text-align: center; font-size: 10px; color: #94a3b8; font-family: monospace; margin-top: 25px; }
+            @media print {
+              body { padding: 0; }
+              .ticket-box { border: 2px dashed #000; box-shadow: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="ticket-box">
+            <div class="header">
+              <h1>Ticket Bari</h1>
+              <p>Online Digital Transport Ticket Manifest</p>
+            </div>
+            
+            <div class="badge">${ticket.transportType} Official Node</div>
+            <div class="title">${ticket.vehicleName}</div>
+            <div class="route">${ticket.route}</div>
+            
+            <div class="info-grid">
+              <div class="info-item">Journey Date: <b>${ticket.date}</b></div>
+              <div class="info-item" style="text-align: right;">Seats Allocated: <b style="color: #ef4444; font-family: monospace;">${ticket.seats}</b></div>
+            </div>
+            
+            <div class="footer">
+              <div class="status">✓ Paid & Verified</div>
+              <div class="price">৳${ticket.price}</div>
+            </div>
+            
+            <div class="verification">
+              Verification Node hash: TKB-LIVE-2026-${ticket._id?.substring(0, 8).toUpperCase()}
+            </div>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
   };
 
   return (
@@ -81,9 +152,24 @@ const MyTickets = () => {
                     }`}>
                       {ticket.transportType} Document
                     </span>
-                    <button onClick={() => handleCancelTicket(ticket._id)} className="text-gray-300 hover:text-red-500 transition p-1">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    
+                    {/* অ্যাকশন বাটনস (ডাউনলোড এবং ক্যানসেল) */}
+                    <div className="flex items-center gap-1">
+                      <button 
+                        onClick={() => handleDownloadPDF(ticket)} 
+                        title="Download Ticket PDF"
+                        className="text-gray-400 hover:text-slate-900 transition p-1.5 hover:bg-gray-100 rounded-full"
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleCancelTicket(ticket._id)} 
+                        title="Cancel Booking"
+                        className="text-gray-300 hover:text-red-500 transition p-1.5 hover:bg-red-50 rounded-full"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
                   <h3 className="text-base font-black text-gray-800 mt-3">{ticket.vehicleName}</h3>

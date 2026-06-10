@@ -24,7 +24,7 @@ const PaymentSuccess = () => {
 
         {/* Dynamic Route Switching Buttons */}
         <div className="space-y-3 pt-2">
-          <Link to="/mytickets" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl text-sm transition shadow-md flex items-center justify-center gap-2">
+          <Link to="/my-tickets" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl text-sm transition shadow-md flex items-center justify-center gap-2">
             <Ticket className="w-4 h-4" /> View My Booked Tickets
           </Link>
           <Link to="/" className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-3.5 rounded-2xl text-xs transition flex items-center justify-center gap-1.5">

@@ -7,17 +7,15 @@ import Register from "../Pages/Register/Register";
 // 📂 Components ফোল্ডার থেকে ইম্পোর্ট
 import About from "../Components/About/About";
 import MyTickets from "../Components/MyTickets/MyTickets";
-import Contuct from "../Components/Contact/Contact";
+import Contact from "../Components/Contact/Contact"; // বানান ফিক্সড
 
-// 📂 আপনার আসল ফোল্ডার স্ট্রাকচার (TicketDetails) অনুযায়ী সঠিক ইম্পোর্ট পাথ
+// 📂 TicketDetails ফোল্ডার থেকে ইম্পোর্ট
 import BusTickets from "../Pages/TicketDetails/BusTickets/BusTickets";
 import TrainTickets from "../Pages/TicketDetails/TrainTickets/TrainTickets";
 import LaunchTickets from "../Pages/TicketDetails/LaunchTickets/LaunchTickets";
 import PlaneTickets from "../Pages/TicketDetails/PlaneTickets/PlaneTickets";
-import Contact from "../Components/Contact/Contact";
 
-import  AdminDashboard from "../dashboard/Admin/AdminDashboard";
-import  Mytickets from"../Components/MyTickets/MyTickets";
+import AdminDashboard from "../dashboard/Admin/AdminDashboard";
 import Checkout from "../Pages/TicketDetails/Checkout/Checkout";
 import Payment from "../Pages/TicketDetails/Checkout/Payment";
 import PaymentSuccess from "../Pages/TicketDetails/Checkout/PaymentSuccess";
@@ -45,13 +43,12 @@ const router = createBrowserRouter([
       },
       {
         path: "contact",
-        element: <Contuct />,
+        element: <Contact />,
       },
       {
-        path: "my-tickets",
-        element: <MyTickets/>
+        path: "my-tickets", // 🎯 আপনার চাওয়া অনুযায়ী পাথ ঠিক রাখা হলো
+        element: <MyTickets />
       },
-      
       {
         path: "services/bus",
         element: <BusTickets />,
@@ -69,29 +66,20 @@ const router = createBrowserRouter([
         element: <PlaneTickets />,
       },
       {
-        path: "about",
-        element: <About/>
-      },
-      {
-        path: "contact",
-        element: <Contact/>
-      },
-      {
-        path: "/admin-dashboard",
+        path: "admin-dashboard", // প্রথম স্লাশ (/) বাদ দেওয়া হলো চাইল্ড রুট হিসেবে সঠিক রাখার জন্য
         element: <AdminDashboard />
       },
-
       {
-        path:"checkout",
-        element:<Checkout/>
+        path: "checkout",
+        element: <Checkout />
       },
       {
-        path : "payment",
-        element: <Payment/>
+        path: "payment",
+        element: <Payment />
       },
       {
-        path: "paymentSuccsess",
-        element: <PaymentSuccess/>
+        path: "paymentSuccess", // 🎯 বানান সংশোধন করা হলো (Succsess -> Success)
+        element: <PaymentSuccess />
       }
     ],
   },
