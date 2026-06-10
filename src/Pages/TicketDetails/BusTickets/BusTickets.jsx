@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+
 import { Bus, Search, ArrowLeftRight, Calendar, Users, CreditCard, Armchair, CheckCircle2, X } from "lucide-react";
 import useAuth from "../../../hooks/useAuth"; 
 import Loader from "../../../Components/Loader/Loader.jsx";
@@ -68,13 +69,16 @@ const BusTickets = () => {
     fetchBuses(query); 
   };
 
-  const handleViewSeats = (bus) => {
-    setSelectedBus(bus);
-    setSelectedSeats([]);
-    setIsPaymentModalOpen(false);
-    setPaymentBus(null);
-  };
-
+const handleViewSeats = (bus) => {
+  if (!user) {
+    navigate("/login");
+    return;
+  }
+  setSelectedBus(bus);
+  setSelectedSeats([]);
+  setIsPaymentModalOpen(false);
+  setPaymentBus(null);
+};
   const handleSeatClick = (seat) => {
     if (bookedSeatsDemo.includes(seat)) return;
     if (selectedSeats.includes(seat)) {
