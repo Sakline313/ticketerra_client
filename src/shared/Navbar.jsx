@@ -64,8 +64,14 @@ const Navbar = () => {
             
             {/* 🚀 Separate Component Links */}
             <li><RouterLink to="/about" onClick={() => setOpen(false)} className={navStyle}>About</RouterLink></li>
-            <li><RouterLink to="/my-tickets" onClick={() => setOpen(false)} className={navStyle}>My Tickets</RouterLink></li>
-            <li><RouterLink to="/contact" onClick={() => setOpen(false)} className={navStyle}>Contact Us</RouterLink></li>
+       <li><RouterLink to="/my-tickets" onClick={() => setOpen(false)} className={navStyle}>My Tickets</RouterLink></li>
+
+{/* ✅ শুধু admin দেখতে পাবে */}
+{user?.email === "admin@gmail.com" && (
+  <li><RouterLink to="/admin-dashboard" onClick={() => setOpen(false)} className={navStyle}>Dashboard</RouterLink></li>
+)}
+
+<li><RouterLink to="/contact" onClick={() => setOpen(false)} className={navStyle}>Contact Us</RouterLink></li>
           </ul>
 
           {/* User Profile / Sign In Section */}
