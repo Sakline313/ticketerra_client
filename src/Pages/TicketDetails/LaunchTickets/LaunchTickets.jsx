@@ -35,19 +35,17 @@ const LaunchTickets = () => {
     fetchLaunches();
   }, []);
 
-  // সার্চ হ্যান্ডেলার
-  const handleSearch = (e) => {
+  // সার্চ হ্যান্ডেলারa
+const handleSearch = (e) => {
     e.preventDefault();
     
+    // ভ্যালিডেশন ঠিক করুন
     if (departFrom === "Select Terminal" || goingTo === "Select Terminal") {
       alert("Please select a valid origin and destination terminal!");
       return;
     }
-    if (departFrom === goingTo) {
-      alert("Origin and Destination terminals cannot be the same!");
-      return;
-    }
     
+    // ব্যাকএন্ডের সাথে মিল রেখে কুয়েরি তৈরি করুন
     let query = `&from=${departFrom}&to=${goingTo}&date=${journeyDate}&type=${cabinType}`;
     fetchLaunches(query);
   };
