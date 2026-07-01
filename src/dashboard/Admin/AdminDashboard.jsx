@@ -11,7 +11,7 @@ const AdminDashboard = () => {
   const [bookings, setBookings] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-
+const API_URL = "https://server-project11.vercel.app/";
   useEffect(() => {
     if (user?.email) {
       setLoading(true);
