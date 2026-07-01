@@ -11,12 +11,16 @@ const AdminDashboard = () => {
   const [bookings, setBookings] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-const API_URL = "https://server-project11.vercel.app/";
+
+  // এখানে API_URL ডিক্লেয়ার করা হয়েছে
+  const API_URL = "https://server-project11.vercel.app"; 
+
   useEffect(() => {
     if (user?.email) {
       setLoading(true);
       
-      fetch(`http://localhost:5000/admin/stats?email=${user.email}`)
+      // সংশোধিত Fetch: localhost এর পরিবর্তে API_URL ব্যবহার করা হয়েছে
+      fetch(`${API_URL}/admin/stats?email=${user.email}`)
         .then((res) => {
           if (!res.ok) throw new Error("Forbidden Access! Admins Only.");
           return res.json();
@@ -26,7 +30,7 @@ const API_URL = "https://server-project11.vercel.app/";
         })
         .catch((err) => setError(err.message));
 
-      fetch(`http://localhost:5000/admin/bookings?email=${user.email}`)
+      fetch(`${API_URL}/admin/bookings?email=${user.email}`)
         .then((res) => {
           if (!res.ok) throw new Error("Forbidden Access! Admins Only.");
           return res.json();
