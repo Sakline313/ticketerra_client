@@ -1,31 +1,28 @@
 import React, { useEffect, useState } from "react";
 import { Ship, Search, ArrowLeftRight, Calendar, Anchor } from "lucide-react";
-import Loader from "../../../Components/Loader/Loader.jsx"; // লোডার কম্পোনেন্ট ইম্পোর্ট
+import Loader from "../../../Components/Loader/Loader.jsx";
 import { Link } from 'react-router-dom';
-
 
 const LaunchTickets = () => {
   const [launches, setLaunches] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // সার্চের জন্য স্টেট (State) ডিক্লেয়ারেশন
+  // API URL সেটআপ
+  const API_URL = "http://localhost:5000";
+
+  // সার্চ স্টেট
   const [departFrom, setDepartFrom] = useState("Select Terminal");
   const [goingTo, setGoingTo] = useState("Select Terminal");
   const [journeyDate, setJourneyDate] = useState("2026-06-08");
   const [cabinType, setCabinType] = useState("Single Cabin");
 
-  // প্রথমবার পেজ লোড হলে সব লঞ্চ নিয়ে আসবে
-  useEffect(() => {
-    fetchLaunches("");
-  }, []);
-
-  // ডাটা ফেচ করার কমন ফাংশন
-  const fetchLaunches = (queryString) => {
+  // ডাটা ফেচ করার ফাংশন
+  const fetchLaunches = (queryString = "") => {
     setLoading(true);
-    fetch(`http://localhost:5000/transports?category=launch${queryString}`)
+    fetch(`${API_URL}/transports?category=launch${queryString}`)
       .then((res) => res.json())
       .then((data) => {
-        setLaunches(data);
+        setLaunches(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch((err) => {
@@ -34,9 +31,14 @@ const LaunchTickets = () => {
       });
   };
 
-  // সার্চ বাটনে ক্লিক করলে এই ফাংশনটি রান হবে
+  useEffect(() => {
+    fetchLaunches();
+  }, []);
+
+  // সার্চ হ্যান্ডেলার
   const handleSearch = (e) => {
     e.preventDefault();
+    
     if (departFrom === "Select Terminal" || goingTo === "Select Terminal") {
       alert("Please select a valid origin and destination terminal!");
       return;
@@ -46,12 +48,7 @@ const LaunchTickets = () => {
       return;
     }
     
-    // ডাইনামিক কুয়েরি স্ট্রিং তৈরি
-    let query = "";
-    if (departFrom !== "Select Terminal") query += `&from=${departFrom}`;
-    if (goingTo !== "Select Terminal") query += `&to=${goingTo}`;
-    if (journeyDate) query += `&date=${journeyDate}`;
-    
+    let query = `&from=${departFrom}&to=${goingTo}&date=${journeyDate}&type=${cabinType}`;
     fetchLaunches(query);
   };
 
@@ -142,30 +139,9 @@ const LaunchTickets = () => {
               </button>
             </div>
           </form>
-
-          {/* Trending Route Setup */}
-          <div className="px-6 py-4 bg-gray-50/30 rounded-b-[40px] text-[11px] flex flex-wrap items-center gap-3">
-            <span className="font-bold text-gray-400 uppercase">Trending:</span>
-            {["Dhaka → Barishal", "Barishal → Dhaka"].map((route, i) => (
-              <span 
-                key={i} 
-                onClick={() => {
-                  const [from, to] = route.split(" → ");
-                  const finalFrom = from === "Dhaka" ? "Dhaka (Sadarghat)" : from;
-                  const finalTo = to === "Dhaka" ? "Dhaka (Sadarghat)" : to;
-                  setDepartFrom(finalFrom);
-                  setGoingTo(finalTo);
-                  fetchLaunches(`&from=${finalFrom}&to=${finalTo}`);
-                }}
-                className="bg-white border border-gray-100 px-3 py-1.5 rounded-full text-gray-600 font-semibold cursor-pointer hover:text-blue-500 transition shadow-sm"
-              >
-                {route}
-              </span>
-            ))}
-          </div>
         </div>
 
-        {/* Dynamic Launch List Section With Global Assignment Loader */}
+        {/* Dynamic Launch List */}
         <div className="mt-8 mb-12">
           {loading ? (
             <Loader message="Scanning waterways and secure cabin configurations..." />
@@ -176,7 +152,7 @@ const LaunchTickets = () => {
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {launches.map((launch) => (
-                <div key={launch._id || launch.id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div key={launch._id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div className="flex items-center gap-4">
                     <div className="p-4 bg-blue-50 text-blue-500 rounded-2xl">
                       <Anchor className="w-6 h-6" />
@@ -199,19 +175,15 @@ const LaunchTickets = () => {
                       <span className="text-2xl font-black text-gray-800">৳{launch.price}</span>
                       <span className="text-xs text-gray-400 block">per cabin</span>
                     </div>
-                  <Link 
-  to={`/checkout/${launch._id || launch.id}`} 
-  className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-2xl transition shadow-md active:scale-95 text-sm block text-center"
->
-  Book Cabin
-</Link>
+                    <Link to={`/checkout/${launch._id}`} className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-2xl transition shadow-md active:scale-95 text-sm block text-center">
+                      Book Cabin
+                    </Link>
                   </div>
                 </div>
               ))}
             </div>
           )}
         </div>
-
       </div>
     </div>
   );
